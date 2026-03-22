@@ -1,2 +1,2 @@
 # flashcards
-A Website for learning vocabulary with flashcards. Credits: Anthropic (Claude.ai)
+A Website for learning vocabulary with flashcards. Including different modes like multiple choice.
