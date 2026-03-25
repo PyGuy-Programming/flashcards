@@ -121,7 +121,7 @@ header p{margin-top:4px;font-size:0.78rem;letter-spacing:0.14em;text-transform:u
 .week-label{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#7a5a4a}
 .week-pct{font-size:0.62rem;color:#5a3a2a}
 /* ── Deck list ── */
-.deck-list{margin-top:36px;width:100%;max-width:560px}
+.deck-list{margin-top:36px;width:100%;max-width:560px}.deck-list-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:6px 0;border-bottom:1.5px solid var(--rule);margin-bottom:0}.deck-list-header span{font-family:'PTSerif',serif;font-size:0.95rem;color:#4a2a1a}.deck-toggle-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;color:#9a7a6a;padding:4px 8px;line-height:1;opacity:0.6}.deck-toggle-btn:hover{opacity:1}.deck-body{overflow:hidden;transition:max-height 0.3s ease;max-height:0}.deck-body.open{max-height:300px}
 .deck-list h3{font-family:'PTSerif',serif;font-size:0.95rem;margin-bottom:10px;color:#4a2a1a}
 .deck-items{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto}
 .deck-item{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border:1px solid var(--rule);background:var(--paper);font-size:0.83rem}
@@ -271,8 +271,13 @@ kbd{display:inline-block;border:1.5px solid var(--ink);padding:1px 6px;font-fami
 
 <!-- Deck list -->
 <div class="deck-list" id="deck-list" style="display:none">
-  <h3>Deck</h3>
-  <div class="deck-items" id="deck-items"></div>
+  <div class="deck-list-header" onclick="toggleDeckPreview()">
+    <span>Deck</span>
+    <button class="deck-toggle-btn" id="deck-toggle-btn" title="Show/hide deck">✎</button>
+  </div>
+  <div class="deck-body" id="deck-body">
+    <div class="deck-items" id="deck-items" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <!-- Tutorial overlay -->
@@ -323,7 +328,7 @@ function generateFromBulk() {
   deck = [...deck, ...parsed];
   document.getElementById('bulk-input').value = '';
   startSession();
-  renderDeckList();
+  renderDeckList(true);
 }
 
 // ── Session ──
@@ -355,7 +360,10 @@ function renderCard() {
   const cardEl = document.getElementById('card');
   const c = session.cards[session.current];
   session.flipped = false;
+  cardEl.style.transition = 'none';
   cardEl.classList.remove('flipped', 'empty-card', 'no-click');
+  cardEl.offsetHeight; // force reflow
+  cardEl.style.transition = '';
 
   if (modes.quiz) {
     cardEl.classList.add('no-click');
@@ -389,8 +397,11 @@ function renderCard() {
 function renderEmpty() {
   const cardEl = document.getElementById('card');
   session = null;
+  cardEl.style.transition = 'none';
   cardEl.classList.add('empty-card');
   cardEl.classList.remove('flipped','no-click');
+  cardEl.offsetHeight;
+  cardEl.style.transition = '';
   cardEl.querySelector('.card-front .word').textContent = 'Add some cards above';
   const sub = cardEl.querySelector('.card-front .sub');
   if (sub) sub.textContent = 'then click to flip';
@@ -512,11 +523,15 @@ function removeCard(i) {
   if (deck.length) startSession(); else renderEmpty();
   renderDeckList();
 }
-function renderDeckList() {
+function renderDeckList(collapse) {
   const listEl = document.getElementById('deck-list');
   const itemsEl = document.getElementById('deck-items');
   if (!deck.length) { listEl.style.display = 'none'; return; }
   listEl.style.display = 'block';
+  // Auto-collapse when called with collapse=true (new deck generated)
+  if (collapse) {
+    document.getElementById('deck-body').classList.remove('open');
+  }
   itemsEl.innerHTML = '';
   deck.forEach((c, i) => {
     const row = document.createElement('div');
@@ -524,6 +539,9 @@ function renderDeckList() {
     row.innerHTML = `<div class="pair"><strong>${esc(c.word)}</strong><span>— ${esc(c.trans)}</span></div><button onclick="removeCard(${i})" title="Remove">✕</button>`;
     itemsEl.appendChild(row);
   });
+}
+function toggleDeckPreview() {
+  document.getElementById('deck-body').classList.toggle('open');
 }
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
